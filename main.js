@@ -20,16 +20,39 @@ const sankey = d3Sankey.sankey()
   .nodeWidth(15)
   .nodePadding(10)
   .extent([[1, 5], [width - 1, height - 5]]);
+  function incomeItems (dataset) {
 
-async function init() {
-  const data = await d3.json("data/data_sankey.json");
-  // Applies it to the data. We make a copy of the nodes and links objects
-  // so as to avoid mutating the original.
-  const { nodes, links } = sankey({
-  // const tmp = sankey({
-    nodes: data.nodes.map(d => Object.assign({}, d)),
-    links: data.links.map(d => Object.assign({}, d))
-  });
+  }
+  function incomeCatagories (income) {
+  
+  }
+  function nodesFromJMU (nodes) {
+    const jmuIncomeItems: incomeItems(dataset);
+    const jmuIncomeCatagories = incomeCatagories(dataset);
+    return [
+      ...jmuIncomeItems,
+      ...jmuIncomeCatagories
+    ];
+  }
+  function linksFromJMU (links) {
+  
+  }
+  function nodesLinksFromJMU (dataset) {
+    const results = {
+      nodes: nodesFromJMU(dataset),
+      links: linksFromJMU(dataset)
+    }
+  }
+  async function init() {
+    const data = await d3.json("data/data_sankey.json");
+    // Applies it to the data. We make a copy of the nodes and links objects
+    // so as to avoid mutating the original.
+    const dataJMU = await d3.json("data/jmu.json");
+    const { nodes, links } = sankey({
+    // const tmp = sankey({
+      nodes: data.nodes.map(d => Object.assign({}, d)),
+      links: data.links.map(d => Object.assign({}, d))
+    });
 
   // console.log('tmp', tmp);
   console.log('nodes', nodes);

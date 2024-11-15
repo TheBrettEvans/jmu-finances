@@ -38,6 +38,7 @@ const sankey = d3Sankey.sankey()
   
   }
   function nodesLinksFromJMU (dataset) {
+    const dataset = data.["jmu-athletics"];
     const results = {
       nodes: nodesFromJMU(dataset),
       links: linksFromJMU(dataset)

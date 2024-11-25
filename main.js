@@ -20,30 +20,6 @@ const sankey = d3Sankey.sankey()
   .nodeWidth(15)
   .nodePadding(10)
   .extent([[1, 5], [width - 1, height - 5]]);
-  function incomeItems (dataset) {
-
-  }
-  function incomeCatagories (income) {
-  
-  }
-  function nodesFromJMU (nodes) {
-    const jmuIncomeItems: incomeItems(dataset);
-    const jmuIncomeCatagories = incomeCatagories(dataset);
-    return [
-      ...jmuIncomeItems,
-      ...jmuIncomeCatagories
-    ];
-  }
-  function linksFromJMU (links) {
-  
-  }
-  function nodesLinksFromJMU (dataset) {
-    const dataset = data.["jmu-athletics"];
-    const results = {
-      nodes: nodesFromJMU(dataset),
-      links: linksFromJMU(dataset)
-    }
-  }
   async function init() {
     const data = await d3.json("data/data_sankey.json");
     // Applies it to the data. We make a copy of the nodes and links objects
@@ -150,3 +126,74 @@ const sankey = d3Sankey.sankey()
 }
 
 init();
+const jmuData = await d3.json("data/jmu.json");
+const sankeyData = transformJMUData(jmuData);
+  function transformJMUData(jmuData) {
+    const nodes = createNodes(jmuData);
+    const links = createLinks(jmuData, nodes);
+    return { nodes, links };
+  }
+  function createNodes(jmuData) {
+    const nodes = [];
+    const seen = new Set();
+  
+    // Add base nodes
+    if (!seen.has("JMU Student")) {
+      nodes.push({ name: "JMU Student", title: "JMU Student" });
+      seen.add("JMU Student");
+    }
+  
+    // Add semester nodes
+    jmuData["student-costs"].forEach(cost => {
+      if (!seen.has(cost.semester)) {
+        nodes.push({ name: cost.semester, title: cost.semester });
+        seen.add(cost.semester);
+      }
+    });
+  
+    // Add itemized cost nodes
+    jmuData["student-costs"].forEach(cost => {
+      if (!seen.has(cost.name)) {
+        nodes.push({ name: cost.name, title: cost.name });
+        seen.add(cost.name);
+      }
+    });
+  
+    return nodes;
+  }
+  function createLinks(jmuData, nodes) {
+    const links = [];
+  
+    // Create links from "JMU Student" to semesters
+    const studentNodeIndex = nodes.findIndex(node => node.name === "JMU Student");
+    jmuData["student-costs"].forEach(cost => {
+      const semesterIndex = nodes.findIndex(node => node.name === cost.semester);
+      links.push({ source: studentNodeIndex, target: semesterIndex, value: 1 });
+    });
+  
+    // Create links from semesters to itemized costs
+    jmuData["student-costs"].forEach(cost => {
+      const semesterIndex = nodes.findIndex(node => node.name === cost.semester);
+      const costIndex = nodes.findIndex(node => node.name === cost.name);
+      links.push({ source: semesterIndex, target: costIndex, value: cost["in-state"] });
+    });
+  
+    return links;
+  }
+  const { nodes, links } = sankeyData;
+const sankeyResult = sankey({
+  nodes: nodes.map(d => Object.assign({}, d)),
+  links: links.map(d => Object.assign({}, d))
+});
+
+const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+svg.selectAll("rect")
+  .data(sankeyResult.nodes)
+  .enter()
+  .append("rect")
+  .attr("x", d => d.x0)
+  .attr("y", d => d.y0)
+  .attr("width", d => d.x1 - d.x0)
+  .attr("height", d => d.y1 - d.y0)
+  .style("fill", d => color(d.category));
